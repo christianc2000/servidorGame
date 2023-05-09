@@ -4,6 +4,11 @@
  */
 package PaquetCliente;
 
+import PaqueteInterfaceFrameCliente.EventEstadoConexion;
+import PaqueteInterfaceFrameCliente.EventMessageSG;
+import PaqueteInterfaceFrameCliente.EventUserAceppt;
+import PaqueteInterfaceFrameCliente.InterfaceFrameCliente;
+import java.awt.Color;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,16 +17,37 @@ import java.util.logging.Logger;
  *
  * @author Christian
  */
-public class Sesión extends javax.swing.JFrame {
+public class Sesión extends javax.swing.JFrame implements InterfaceFrameCliente {
 
     Cliente cliente;
+    Launch launch;
+    Login login;
 
     /**
      * Creates new form Sesión
      */
     public Sesión() {
         initComponents();
-        
+
+    }
+
+    public void setLogin(Login l) {
+        this.login = l;
+    }
+
+    public void setCliente(Cliente cliente) {
+        this.cliente = cliente;
+        this.cliente.addMyEventListener(this);
+    }
+
+    public void setLaunch(Launch launch) {
+        this.launch = launch;
+    }
+
+    public void setEstado(String msje, Color color) {
+        labelEstadoRegister.setOpaque(true);
+        labelEstadoRegister.setText(msje);
+        labelEstadoRegister.setBackground(color);
     }
 
     /**
@@ -38,8 +64,10 @@ public class Sesión extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        btnRegistrar = new javax.swing.JButton();
-        btnLogin = new javax.swing.JButton();
+        btnRegistrarR = new javax.swing.JButton();
+        btnLoginR = new javax.swing.JButton();
+        labelEstadoRegister = new javax.swing.JLabel();
+        labelError = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -50,38 +78,49 @@ public class Sesión extends javax.swing.JFrame {
 
         jLabel3.setText("Password");
 
-        btnRegistrar.setText("Registrar");
-        btnRegistrar.addActionListener(new java.awt.event.ActionListener() {
+        btnRegistrarR.setText("Registrar");
+        btnRegistrarR.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRegistrarActionPerformed(evt);
+                btnRegistrarRActionPerformed(evt);
             }
         });
 
-        btnLogin.setText("Login");
+        btnLoginR.setText("Login");
+        btnLoginR.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLoginRActionPerformed(evt);
+            }
+        });
+
+        labelEstadoRegister.setBackground(new java.awt.Color(255, 51, 51));
+        labelEstadoRegister.setText("DESCONECTADO");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addGap(29, 29, 29)
+                .addComponent(labelEstadoRegister, javax.swing.GroupLayout.PREFERRED_SIZE, 342, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(29, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
                 .addGap(131, 131, 131)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(39, 39, 39)
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnLoginR))
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addGap(84, 84, 84))
+                            .addComponent(labelError)
+                            .addComponent(jLabel2)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                 .addComponent(jLabel3)
                                 .addComponent(txtPassword, javax.swing.GroupLayout.Alignment.TRAILING)
                                 .addComponent(txtNickname, javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addComponent(btnRegistrar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(39, 39, 39)
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 91, Short.MAX_VALUE)
-                        .addComponent(btnLogin)))
+                                .addComponent(btnRegistrarR, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -90,7 +129,7 @@ public class Sesión extends javax.swing.JFrame {
                 .addGap(12, 12, 12)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(btnLogin))
+                    .addComponent(btnLoginR))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -99,18 +138,32 @@ public class Sesión extends javax.swing.JFrame {
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(66, 66, 66)
-                .addComponent(btnRegistrar)
-                .addContainerGap(72, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(labelError)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 42, Short.MAX_VALUE)
+                .addComponent(btnRegistrarR)
+                .addGap(44, 44, 44)
+                .addComponent(labelEstadoRegister, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(15, 15, 15))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnRegistrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegistrarActionPerformed
+    private void btnRegistrarRActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegistrarRActionPerformed
         // TODO add your handling code here:
+        cliente.registrar(txtNickname.getText(), txtPassword.getText());
+    }//GEN-LAST:event_btnRegistrarRActionPerformed
 
-    }//GEN-LAST:event_btnRegistrarActionPerformed
+    private void btnLoginRActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginRActionPerformed
+        // TODO add your handling code here:
+        this.setVisible(false);
+        login.setLaunch(launch);
+        login.setSesión(this);
+        login.setEstado(labelEstadoRegister.getText(), labelEstadoRegister.getBackground());
+        login.setCliente(this.cliente);
+        login.setVisible(true);
+    }//GEN-LAST:event_btnLoginRActionPerformed
 
     /**
      * @param args the command line arguments
@@ -148,12 +201,54 @@ public class Sesión extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnLogin;
-    private javax.swing.JButton btnRegistrar;
+    private javax.swing.JButton btnLoginR;
+    private javax.swing.JButton btnRegistrarR;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel labelError;
+    private javax.swing.JLabel labelEstadoRegister;
     private javax.swing.JTextField txtNickname;
     private javax.swing.JTextField txtPassword;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void onEstado(EventEstadoConexion evento) {
+        labelEstadoRegister.setOpaque(true);
+        if (evento.getEstado()) {
+            labelEstadoRegister.setText("...............CONECTADO...............");
+            labelEstadoRegister.setBackground(Color.green);
+            btnLoginR.setEnabled(true);
+            btnRegistrarR.setEnabled(true);
+        } else {
+            labelEstadoRegister.setText("...............DESCONECTADO...............");
+            labelEstadoRegister.setBackground(Color.red);
+            btnLoginR.setEnabled(false);
+            btnRegistrarR.setEnabled(false);
+
+        }
+    }
+
+    @Override
+    public void onAcceptUser(EventUserAceppt evento) {
+        if (evento.getTipo().equals("R")) {
+            labelError.setVisible(true);
+            labelError.setOpaque(true);
+            if (!evento.getAccept()) {
+
+                labelError.setForeground(Color.red);
+                labelError.setText("ERROR:El Nickname ya está en uso");
+            } else {
+                labelError.setForeground(Color.green);
+                labelError.setText("LOGIN EXITOSO");
+                launch.setVisible(true);
+                this.setVisible(false);
+            }
+        }
+    }
+
+    @Override
+    public void onMessageSG(EventMessageSG evento) {
+        //throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

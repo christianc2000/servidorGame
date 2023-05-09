@@ -12,4 +12,6 @@ import java.util.EventListener;
  */
 public interface InterfaceFrameCliente extends EventListener{
     void onEstado(EventEstadoConexion evento);
+    void onAcceptUser(EventUserAceppt evento);
+    void onMessageSG(EventMessageSG evento);
 }

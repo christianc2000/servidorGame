@@ -24,6 +24,7 @@ public class ServidorGame implements InterfaceServidorGame {
 
     ServidorSocket SS;
     private Map<String, User> Usuarios = new HashMap<>();
+    private Map<String, Tablero> Tableros = new HashMap<>();
     //ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public ServidorGame(int puerto) {
@@ -33,7 +34,7 @@ public class ServidorGame implements InterfaceServidorGame {
         //   objectConexion.establecerConexion();
         cargarListUser();
         mostrarUserCargados();
-        
+
         SS.iniciar();
         SS.addMyEventListener(this);
     }
@@ -73,8 +74,9 @@ public class ServidorGame implements InterfaceServidorGame {
         //System.out.println("SERVIDOR GAME: " + evento.getId());
         //preguntaInicial(evento.getId());
         //System.out.println("Nuevo usuario conectado");
-        System.out.println("Cliente nuevo con sesión: "+evento.getId());
-        SS.sendMessageId(evento.getId(), "S: Conexión exitosa");
+        System.out.println("Cliente nuevo con sesión: " + evento.getId());
+        SS.sendMessageId(evento.getId(), "<MSJ: Conexión exitosa,TIPO:SG>");
+
     }
 
     public String buscarUserSesion(String sesion) {
@@ -110,11 +112,28 @@ public class ServidorGame implements InterfaceServidorGame {
         return false;
     }
 
+    public int cantUserConected(String mysesion) {
+        int c = 0;
+        for (Map.Entry<String, User> entry : Usuarios.entrySet()) {
+            String key = entry.getKey();
+            User val = entry.getValue();
+            if (val.getSesion().length() > 0) {
+                c++;
+            }
+        }
+        return c;
+    }
+
+    public void sendCantUserConnected(String sesion) {
+        SS.sendMessageId(sesion, "<ID:" + sesion + ",DATA:USER:" + (cantUserConected(sesion) - 1) + ">");
+    }
+
     @Override
     public void onUserData(EventUserData evento) {
         // String data[] = Parsear(evento.getData());
         System.out.println("data: " + evento.getData());
         String data[] = Parsear(evento.getData());
+        System.out.println("data SG: " + data.length);
         if (data != null) {
             if (data[1].equals("R")) {
                 if (!existeNickname(data[2])) {
@@ -124,35 +143,48 @@ public class ServidorGame implements InterfaceServidorGame {
                     addUser(idUser, u);
                     DUser usercrud = new DUser();
                     usercrud.insertar(idUser, u.getNickname(), u.getPassword());
-                    SS.sendMessageId(u.getSesion(), "Registrado");
+                    System.out.println("S: Usuario Registrado exitosamente");
+                    SS.sendMessageId(u.getSesion(), "<ID:" + u.getSesion() + ",REGISTRAR:acceptR>");
+                    sendCantUserConnected(u.getSesion());
+                    Tablero t = new Tablero(idUser);
+                    Tableros.put(idUser, t);
+
                 } else {
                     System.out.println("nickname ya existe");
-                    SS.sendMessageId(data[0], "No Registrado");
+                    SS.sendMessageId(data[0], "<ID:" + data[0] + ",REGISTRAR:Noaccept>");
                 }
                 //System.out.println("se envio un msje al cliente");
             } else if (data[1].equals("L")) {
-                //System.out.println("entra a login");
+                System.out.println("entra a login");
                 String idUser = findNickName(data[2]);
-                //System.out.println("idUser: "+idUser);
+                System.out.println("idUser: " + idUser.length());
                 if (idUser.length() > 0) {
                     User u = Usuarios.get(idUser);
                     //   System.out.println("user: "+u.getNickname());
+                    System.out.println("pass u: " + u.getPassword() + "; pass login: " + data[3]);
                     if (u.getPassword().equals(data[3])) {
-                        System.out.println("login correcto");
+                        System.out.println("S: login correcto");
                         u.setSesion(data[0]);
-                        SS.sendMessageId(u.getSesion(), "Logueado");
+                        SS.sendMessageId(u.getSesion(), "<ID:" + u.getSesion() + ",LOGIN:acceptL>");
+                        sendCantUserConnected(u.getSesion());
+                        //Se crea su tablero
+                        Tablero t = new Tablero(idUser);
+                        Tableros.put(idUser, t);
                     } else {
-                        System.out.println("login incorrecto");
-                        SS.sendMessageId(data[0], "no logueado");
+                        System.out.println("login incorrecto, contraseña incorrecta");
+                        SS.sendMessageId(data[0], "<ID:" + data[0] + ",LOGIN:NoacceptL>");
                     }
+
                 } else {
-                    SS.sendMessageId(data[0], "login incorrecto");
+                    System.out.println("login incorrecto" + data[0]);
+                    SS.sendMessageId(data[0], "<ID:" + data[0] + ",LOGIN:NoacceptL>");
                 }
             } else if (data[1].equals("M")) {
                 SS.sendMessageAll(data[0], data[2]);
             } else {
                 System.out.println("ERROR: Formato no válido");
             }
+
         }
     }
 
@@ -181,6 +213,7 @@ public class ServidorGame implements InterfaceServidorGame {
         // System.out.println("data: " + data);
         String v[] = data.split(",");
         switch (v.length) {
+
             case 3 -> {
                 if (ContieneSintaxis("ID:", v[0]) && ContieneSintaxis("TIPO:", v[1]) && ContieneSintaxis("DATA:", v[2])) {
                     v[0] = v[0].substring(3, v[0].length());

@@ -5,6 +5,8 @@
 package PaquetCliente;
 
 import PaqueteInterfaceFrameCliente.EventEstadoConexion;
+import PaqueteInterfaceFrameCliente.EventMessageSG;
+import PaqueteInterfaceFrameCliente.EventUserAceppt;
 import PaqueteInterfaceFrameCliente.InterfaceFrameCliente;
 import java.awt.Color;
 import javax.swing.JLabel;
@@ -14,8 +16,10 @@ import javax.swing.JLabel;
  * @author Christian
  */
 public class Login extends javax.swing.JFrame implements InterfaceFrameCliente {
-
+    
     Cliente cliente;
+    Launch launch;
+    Sesión registrar;
 
     /**
      * Creates new form Login
@@ -23,16 +27,24 @@ public class Login extends javax.swing.JFrame implements InterfaceFrameCliente {
     public Login() {
         initComponents();
     }
-
+    
     public void setCliente(Cliente cliente) {
         this.cliente = cliente;
         this.cliente.addMyEventListener(this);
     }
+    
+    public void setLaunch(Launch launch) {
+        this.launch = launch;
+    }
+
+    public void setSesión(Sesión s) {
+        this.registrar = s;
+    }
 
     public void setEstado(String msje, Color color) {
-        labelEstadoLogin.setOpaque(true);
-        labelEstadoLogin.setText(msje);
-        labelEstadoLogin.setBackground(color);
+        labelEstado.setOpaque(true);
+        labelEstado.setText(msje);
+        labelEstado.setBackground(color);
     }
 
     /**
@@ -51,7 +63,8 @@ public class Login extends javax.swing.JFrame implements InterfaceFrameCliente {
         jLabel3 = new javax.swing.JLabel();
         btnLogin = new javax.swing.JButton();
         btnRegistrar = new javax.swing.JButton();
-        labelEstadoLogin = new javax.swing.JLabel();
+        labelEstado = new javax.swing.JLabel();
+        labelError = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -70,9 +83,14 @@ public class Login extends javax.swing.JFrame implements InterfaceFrameCliente {
         });
 
         btnRegistrar.setText("Registrar");
+        btnRegistrar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRegistrarActionPerformed(evt);
+            }
+        });
 
-        labelEstadoLogin.setBackground(new java.awt.Color(255, 51, 51));
-        labelEstadoLogin.setText("DESCONECTADO");
+        labelEstado.setBackground(new java.awt.Color(255, 51, 51));
+        labelEstado.setText("DESCONECTADO");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -82,26 +100,25 @@ public class Login extends javax.swing.JFrame implements InterfaceFrameCliente {
                 .addGap(131, 131, 131)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(39, 39, 39)
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 105, Short.MAX_VALUE)
+                        .addComponent(btnRegistrar))
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addGap(84, 84, 84))
+                            .addComponent(labelError)
+                            .addComponent(jLabel2)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                 .addComponent(jLabel3)
                                 .addComponent(txtPassword, javax.swing.GroupLayout.Alignment.TRAILING)
                                 .addComponent(txtNickname, javax.swing.GroupLayout.Alignment.TRAILING)
                                 .addComponent(btnLogin, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(39, 39, 39)
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 105, Short.MAX_VALUE)
-                        .addComponent(btnRegistrar)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
-            .addGroup(layout.createSequentialGroup()
-                .addGap(27, 27, 27)
-                .addComponent(labelEstadoLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 342, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(labelEstado, javax.swing.GroupLayout.PREFERRED_SIZE, 342, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(28, 28, 28))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -118,10 +135,12 @@ public class Login extends javax.swing.JFrame implements InterfaceFrameCliente {
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(66, 66, 66)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(labelError)
+                .addGap(44, 44, 44)
                 .addComponent(btnLogin)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 26, Short.MAX_VALUE)
-                .addComponent(labelEstadoLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 42, Short.MAX_VALUE)
+                .addComponent(labelEstado, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(15, 15, 15))
         );
 
@@ -130,7 +149,17 @@ public class Login extends javax.swing.JFrame implements InterfaceFrameCliente {
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         // TODO add your handling code here:
+        cliente.login(txtNickname.getText(), txtPassword.getText());
     }//GEN-LAST:event_btnLoginActionPerformed
+
+    private void btnRegistrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegistrarActionPerformed
+        // TODO add your handling code here:
+        this.setVisible(false);
+        registrar.setVisible(true);
+        registrar.setLogin(this);
+        registrar.setLaunch(launch);
+        registrar.setEstado(labelEstado.getText(), labelEstado.getBackground());
+    }//GEN-LAST:event_btnRegistrarActionPerformed
 
     /**
      * @param args the command line arguments
@@ -173,7 +202,8 @@ public class Login extends javax.swing.JFrame implements InterfaceFrameCliente {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel labelEstadoLogin;
+    private javax.swing.JLabel labelError;
+    private javax.swing.JLabel labelEstado;
     private javax.swing.JTextField txtNickname;
     private javax.swing.JTextField txtPassword;
     // End of variables declaration//GEN-END:variables
@@ -181,13 +211,43 @@ public class Login extends javax.swing.JFrame implements InterfaceFrameCliente {
     public void onEstado(EventEstadoConexion evento) {
         //throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
 
-        labelEstadoLogin.setOpaque(true);
+        labelEstado.setOpaque(true);
         if (evento.getEstado()) {
-            labelEstadoLogin.setText("...............CONECTADO...............");
-            labelEstadoLogin.setBackground(Color.green);
+            labelEstado.setText("...............CONECTADO...............");
+            labelEstado.setBackground(Color.green);
+            btnLogin.setEnabled(true);
+            btnRegistrar.setEnabled(true);
         } else {
-            labelEstadoLogin.setText("...............DESCONECTADO...............");
-            labelEstadoLogin.setBackground(Color.red);
+            labelEstado.setText("...............DESCONECTADO...............");
+            labelEstado.setBackground(Color.red);
+            btnLogin.setEnabled(false);
+            btnRegistrar.setEnabled(false);
+            
         }
+    }
+    
+    @Override
+    public void onAcceptUser(EventUserAceppt evento) {
+        //throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        if (evento.getTipo().equals("L")) {
+            labelError.setVisible(true);
+            labelError.setOpaque(true);
+            if (!evento.getAccept()) {
+                
+                labelError.setForeground(Color.red);
+                labelError.setText("Error Nickname o contraseña no válidos");
+            } else {
+                labelError.setForeground(Color.green);
+                labelError.setText("LOGIN EXITOSO");
+                launch.setVisible(true);
+                this.setVisible(false);
+            }
+        }
+        
+    }
+
+    @Override
+    public void onMessageSG(EventMessageSG evento) {
+       // throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

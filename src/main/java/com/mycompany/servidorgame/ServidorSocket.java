@@ -68,7 +68,7 @@ public class ServidorSocket implements InterfaceServidorSocket {
     public void agregarCliente(String clienteId, Socket socket) {
         ConcurrentHashMap<String, Object> atributosCliente = new ConcurrentHashMap<>(); // HashMap para almacenar los atributos del cliente
         Clientes.put(clienteId, socket); // Agregar el cliente al mapa usando el identificador único como clave
-        sendMessageId(clienteId, "ID:"+clienteId);
+        sendMessageId(clienteId, "<ID:"+clienteId+",TIPO:I>");
     }
 
     public String generarClienteId() {

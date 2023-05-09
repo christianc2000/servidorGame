@@ -5,8 +5,15 @@
 package PaquetCliente;
 
 import PaqueteInterfaceFrameCliente.EventEstadoConexion;
+import PaqueteInterfaceFrameCliente.EventMessageSG;
+import PaqueteInterfaceFrameCliente.EventUserAceppt;
 import PaqueteInterfaceFrameCliente.InterfaceFrameCliente;
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -17,6 +24,7 @@ public class Launch extends javax.swing.JFrame implements InterfaceFrameCliente 
     Cliente cliente;
     Login login;
     Sesión registrar;
+    JTable tabla;
 
     /**
      * Creates new form Launch
@@ -31,6 +39,8 @@ public class Launch extends javax.swing.JFrame implements InterfaceFrameCliente 
         this.cliente.addMyEventListener(this);
         this.login = new Login();
         this.registrar = new Sesión();
+        btnIniciar.setVisible(false);
+
     }
 
     /**
@@ -45,6 +55,8 @@ public class Launch extends javax.swing.JFrame implements InterfaceFrameCliente 
         labelEstado = new javax.swing.JLabel();
         btnLoginL = new javax.swing.JButton();
         btnRegisterL = new javax.swing.JButton();
+        btnIniciar = new javax.swing.JButton();
+        labelConectados = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -59,6 +71,18 @@ public class Launch extends javax.swing.JFrame implements InterfaceFrameCliente 
         });
 
         btnRegisterL.setText("REGISTER");
+        btnRegisterL.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRegisterLActionPerformed(evt);
+            }
+        });
+
+        btnIniciar.setText("INICIAR");
+        btnIniciar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnIniciarActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -73,13 +97,22 @@ public class Launch extends javax.swing.JFrame implements InterfaceFrameCliente 
                         .addGap(145, 145, 145)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(btnRegisterL, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(btnLoginL, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(btnLoginL, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(btnIniciar)
+                        .addGap(39, 39, 39)
+                        .addComponent(labelConectados)))
                 .addContainerGap(34, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(71, 71, 71)
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnIniciar)
+                    .addComponent(labelConectados))
+                .addGap(43, 43, 43)
                 .addComponent(btnLoginL)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnRegisterL)
@@ -94,13 +127,35 @@ public class Launch extends javax.swing.JFrame implements InterfaceFrameCliente 
     private void btnLoginLActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginLActionPerformed
         // TODO add your handling code here:
         //this.setVisible(false);
-        this.cliente.removeMyEventListener(this);
+        //this.cliente.removeMyEventListener(this);
         this.setVisible(false);
+        login.setLaunch(this);
+        login.setSesión(registrar);
         login.setEstado(labelEstado.getText(), labelEstado.getBackground());
         login.setCliente(this.cliente);
         login.setVisible(true);
 
     }//GEN-LAST:event_btnLoginLActionPerformed
+
+    private void btnRegisterLActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegisterLActionPerformed
+        // TODO add your handling code here:
+        this.setVisible(false);
+        registrar.setLaunch(this);
+        registrar.setLogin(login);
+        registrar.setEstado(labelEstado.getText(), labelEstado.getBackground());
+        registrar.setCliente(this.cliente);
+        registrar.setVisible(true);
+
+    }//GEN-LAST:event_btnRegisterLActionPerformed
+
+    private void btnIniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIniciarActionPerformed
+        // TODO add your handling code here:
+        
+         SwingUtilities.invokeLater(() -> {
+            MiVentana ventana = new MiVentana();
+            ventana.setVisible(true);
+        });
+    }//GEN-LAST:event_btnIniciarActionPerformed
 
     /**
      * @param args the command line arguments
@@ -138,22 +193,52 @@ public class Launch extends javax.swing.JFrame implements InterfaceFrameCliente 
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnIniciar;
     private javax.swing.JButton btnLoginL;
     private javax.swing.JButton btnRegisterL;
+    private javax.swing.JLabel labelConectados;
     private javax.swing.JLabel labelEstado;
     // End of variables declaration//GEN-END:variables
 
     @Override
     public void onEstado(EventEstadoConexion evento) {
         //throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        System.out.println("evento: " + evento.getEstado());
         labelEstado.setOpaque(true);
+        btnLoginL.setEnabled(evento.getEstado());
+        btnRegisterL.setEnabled(evento.getEstado());
         if (evento.getEstado()) {
+            System.out.println("SE CONECTA DESDE EL FRAME");
             labelEstado.setText("...............CONECTADO...............");
             labelEstado.setBackground(Color.green);
 
         } else {
+            System.out.println("entraaaa");
             labelEstado.setText("...............DESCONECTADO...............");
             labelEstado.setBackground(Color.red);
+
         }
+    }
+
+    @Override
+    public void onAcceptUser(EventUserAceppt evento) {
+//        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        if (evento.getAccept()) {
+            btnLoginL.setVisible(false);
+            btnRegisterL.setVisible(false);
+            btnIniciar.setVisible(true);
+
+            // cliente.executeNickname();
+            // labelUsuario.setText(cliente.getNickname());
+        }
+    }
+
+    @Override
+    public void onMessageSG(EventMessageSG evento) {
+        // throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        labelConectados.setOpaque(true);
+        labelConectados.setForeground(Color.green);
+        labelConectados.setText(evento.getMessage() + " usuarios conectados");
+
     }
 }

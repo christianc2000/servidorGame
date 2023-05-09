@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 import javax.swing.event.EventListenerList;
 
 /**
@@ -37,12 +38,24 @@ public class HiloMensaje extends Thread {
             String mensaje;
             // Leemos los mensajes del cliente y los imprimimos en la consola
             while ((mensaje = entradaCliente.readLine()) != null) {
-               // System.out.println("Hilo Mensaje Servidor: Mensaje recibido del cliente");
-                EventMensaje evento=new EventMensaje(mensaje);
+                // System.out.println("Hilo Mensaje Servidor: Mensaje recibido del cliente");
+                EventMensaje evento = new EventMensaje(mensaje);
                 notificarOnMensajeEvent(evento);
             }
+        } catch (SocketException e) {
+            // Manejo de la excepción SocketException
+            System.out.println("Se ha cerrado la conexión del cliente de manera abrupta.");
+            // Puedes cerrar los recursos y finalizar el hilo de manera adecuada aquí
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            // Cerrar el hilo cuando el cliente se desconecta
+           // System.out.println("Cerrando el hilo Mensaje del servidor con el cliente...");
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

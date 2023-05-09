@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
  */
-package PaqueteInterfaceServidorSocket;
+package PaqueteInterfaceFrameCliente;
 
 import java.util.EventListener;
 
@@ -10,8 +10,6 @@ import java.util.EventListener;
  *
  * @author Christian
  */
-public interface InterfaceServidorSocket  extends EventListener{
-      void onSesionCliente(EventSesion evento);
-       void onMessageCliente(EventMensaje evento);
-        void onDesconexionCliente(EventPing evento);
+public interface InterfaceFrameCliente extends EventListener{
+    void onEstado(EventEstadoConexion evento);
 }

@@ -6,10 +6,13 @@ package com.mycompany.servidorgame;
 
 import PaqueteHilosServidorSocket.HiloConexion;
 import PaqueteHilosServidorSocket.HiloMensaje;
+import PaqueteHilosServidorSocket.HiloPing;
 import PaqueteInterfaceServidorGame.EventUserConnected;
 import PaqueteInterfaceServidorGame.EventUserData;
 import PaqueteInterfaceServidorGame.InterfaceServidorGame;
+import PaqueteInterfaceServidorSocket.Escuchadores;
 import PaqueteInterfaceServidorSocket.EventMensaje;
+import PaqueteInterfaceServidorSocket.EventPing;
 import PaqueteInterfaceServidorSocket.EventSesion;
 import PaqueteInterfaceServidorSocket.InterfaceServidorSocket;
 import java.io.IOException;
@@ -19,6 +22,9 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.EventListenerList;
@@ -31,15 +37,23 @@ public class ServidorSocket implements InterfaceServidorSocket {
 
     private int puerto;
     private ServerSocket servidor;
-    private Map<String, Socket> Clientes = new HashMap<>();
+    private ConcurrentHashMap<String, Socket> Clientes = new ConcurrentHashMap<>();
     EventListenerList listenerList = new EventListenerList();
 
     public ServidorSocket(int puerto) {
         this.puerto = puerto;
     }
 
+    public synchronized ConcurrentHashMap<String, Socket> getClientes() {
+        return Clientes;
+    }
+
     public void iniciar() {
         try {
+
+            HiloPing ping = new HiloPing(this);
+            ping.addMyEventListener(this);
+            ping.start();
             servidor = new ServerSocket(puerto);
             System.out.println("*******Servidor Socket iniciado*******");
             HiloConexion hc = new HiloConexion(servidor);
@@ -52,9 +66,9 @@ public class ServidorSocket implements InterfaceServidorSocket {
 
     //Agregar cliente a la lista con HashMap
     public void agregarCliente(String clienteId, Socket socket) {
-        Map<String, Object> atributosCliente = new HashMap<>(); // HashMap para almacenar los atributos del cliente
+        ConcurrentHashMap<String, Object> atributosCliente = new ConcurrentHashMap<>(); // HashMap para almacenar los atributos del cliente
         Clientes.put(clienteId, socket); // Agregar el cliente al mapa usando el identificador único como clave
-        sendMessageId(clienteId, clienteId);
+        sendMessageId(clienteId, "ID:"+clienteId);
     }
 
     public String generarClienteId() {
@@ -85,13 +99,24 @@ public class ServidorSocket implements InterfaceServidorSocket {
         //Parsear(evento.getMensaje());
     }
 
+    @Override
+    public void onDesconexionCliente(EventPing evento) {
+        //throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        System.out.println("****DESDE EL EVENTO DESCONEXION*******");
+        System.out.println(evento.getId() + "Cliente se desconecto");
+        System.out.println("cantidad: "+Clientes.size());
+        Clientes.remove(evento.getId());
+        System.out.println("cantidad: "+Clientes.size());
+        System.out.println("**************************************");
+    }
+
     public Socket getClient(String id) {
         return Clientes.get(id);
     }
 
     public void sendMessageAll(String id, String mensaje) {
 
-        for (Map.Entry<String, Socket> entry : Clientes.entrySet()) {
+        for (ConcurrentHashMap.Entry<String, Socket> entry : Clientes.entrySet()) {
             String key = (String) entry.getKey();
             Socket val = entry.getValue();
             //System.out.println("key: " + key + "; id: " + id);
@@ -99,26 +124,16 @@ public class ServidorSocket implements InterfaceServidorSocket {
                 sendMessageId(key, id + ":" + mensaje);
             }
         }
+
     }
 
     public void sendMessageId(String Id, String mensaje) {
+        //ExecutorService executor = Executors.newFixedThreadPool(1);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        HiloTask task = new HiloTask();
         Socket socket = (Socket) Clientes.get(Id);
-        try {
-            PrintWriter salida = new PrintWriter(socket.getOutputStream(), true);
-            salida.println(mensaje);
-        } catch (IOException ex) {
-            Logger.getLogger(ServidorSocket.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+        executor.execute(() -> task.sendMessageSocket(socket, mensaje));
 
-    public void sendMessage(Socket socket, String mensaje) {
-        try {
-            PrintWriter salida = new PrintWriter(socket.getOutputStream(), true);
-            salida.println(mensaje);
-            //salida.close();
-        } catch (IOException ex) {
-            Logger.getLogger(ServidorSocket.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
 
     //********************************************************************
@@ -147,4 +162,5 @@ public class ServidorSocket implements InterfaceServidorSocket {
             }
         }
     }
+
 }

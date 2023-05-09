@@ -4,6 +4,12 @@
  */
 package PaquetCliente;
 
+import PaqueteInterfaceCliente.EventClientConnected;
+import PaqueteInterfaceCliente.EventClientPing;
+import PaqueteInterfaceCliente.EventMessageServer;
+import PaqueteInterfaceCliente.InterfaceCliente;
+import PaqueteInterfaceFrameCliente.EventEstadoConexion;
+import PaqueteInterfaceFrameCliente.InterfaceFrameCliente;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -12,112 +18,107 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.event.EventListenerList;
 
 /**
  *
  * @author Christian
  */
-public class Cliente {
+public class Cliente implements InterfaceCliente {
 
-    Socket socket;
-    private BufferedReader entrada;
+    private Socket socket;
     private PrintWriter salida;
-    String id;
+    private BufferedReader entrada;
+    private BufferedReader teclado;
+    private String id;
+    private String host;
+    private int puerto;
+    HiloClienteConexion hiloConexion;
+    HiloPingCliente hiloPing;
+    EventListenerList listenerList = new EventListenerList();
+    EventEstadoConexion eec;
 
-    public void setId(String id) {
-        this.id = id;
+    public Cliente(String host, int puerto) {
+        this.host = host;
+        this.puerto = puerto;
     }
 
-    public void iniciar(String host, int puerto) {
+    public void iniciar() {
+        this.hiloConexion = new HiloClienteConexion(host, puerto);
+        this.hiloConexion.addMyEventListener(this);
+        this.hiloConexion.start();
+    }
 
+    /* public static void main(String[] args) {
+        String host = "localhost";
+        int puerto = 5000;
+        Cliente cliente = new Cliente(host, puerto);
+        cliente.iniciar();
+        // cliente.ejecutar();
+    }
+     */
+    @Override
+    public void OnConnecting(EventClientConnected evento) {
+        System.out.println("Se logró conectar con el servidor");
+        Socket socket = evento.getSocket();
+        this.hiloPing = new HiloPingCliente(socket);
+        this.hiloPing.addMyEventListener(this);
+        this.hiloPing.start();
+        eec = new EventEstadoConexion(true, this);
+        this.notificarEstado(eec);
+        this.socket = socket;
         try {
-            // Creamos un socket para conectarnos al servidor
-            socket = new Socket(host, puerto);
-            // Obtenemos los streams de entrada y salida del socket
-            entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            salida = new PrintWriter(socket.getOutputStream(), true);
-            setId(entrada.readLine());
-
-            System.out.println("id cliente: " + id);
-            // Creamos un hilo para escuchar los mensajes del servidor
-
-            // Leemos los mensajes desde el teclado y los enviamos al servidor
-            BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
+            this.entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.salida = new PrintWriter(socket.getOutputStream(), true);
+            this.teclado = new BufferedReader(new InputStreamReader(System.in));
             HiloEscuchaServidor hes = new HiloEscuchaServidor(entrada);
             hes.start();
-            // System.out.println("Escribe un mensaje");
-            String mensaje;
-            boolean b = true;
-            String i = null;
-            int c = 1;
-            while ((mensaje = teclado.readLine()) != null) {
-                if (b) {
-                    if (mensaje.equals("1")) {
-                        i = mensaje;
-                        b = false;
-                        mensaje = "<ID:" + id + ",DATA:*" + mensaje + "*>";
-                        salida.println(mensaje);
-                    } else if (mensaje.equals("2")) {
-                        i = mensaje;
-                        b = false;
-                        mensaje = "<ID:" + id + ",DATA:*" + mensaje + "*>";
-                        salida.println(mensaje);
-                    } else {
-                        System.out.println("ERROR OPCION NO VALIDA");
-                    }
-                } else {
+        } catch (SocketException e) {
+            // Manejo de la excepción SocketException
+            System.out.println("Se ha cerrado la conexión del cliente de manera abrupta.");
+            // Puedes cerrar los recursos y finalizar el hilo de manera adecuada aquí
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-                    if (i.equals("1")) {
-                        
-                        mensaje = "<ID:" + id + ",DATA:"+mensaje+",TIPO:R,C:" + c + ">";
-                        c++;
-                       // System.out.println("c: "+c);
-                        salida.println(mensaje);
-                    } else if (i.equals("2")) {
-                        mensaje = "<ID:" + id + ",DATA:"+mensaje+",TIPO:L,C:" + c + ">";
-                        c++;
-                        salida.println(mensaje);
-                    } else {
-                        System.out.println("************************************");
-                        System.out.println("Yo: " + mensaje);
-                        mensaje = "<ID:" + id + ",DATA:" + mensaje + ">";
-                        salida.println(mensaje);
-                    }
-                    if(c==3){
-                        i="3";
-                    }
-                }
+    }
+
+    @Override
+    public void OnPing(EventClientPing evento) {
+        System.out.println("Se desconectó");
+
+        eec = new EventEstadoConexion(false, this);
+        this.notificarEstado(eec);
+        this.hiloPing.removeMyEventListener(this);
+        this.hiloConexion.removeMyEventListener(this);
+        this.hiloConexion = new HiloClienteConexion(host, puerto);
+        System.out.println(" iniciando reconeccion");
+        this.hiloConexion.addMyEventListener(this);
+        this.hiloConexion.start();
+    }
+
+    //********************************************************************************
+    public void addMyEventListener(InterfaceFrameCliente listener) {
+        listenerList.add(InterfaceFrameCliente.class, listener);
+    }
+
+    public void removeMyEventListener(InterfaceFrameCliente listener) {
+        listenerList.remove(InterfaceFrameCliente.class, listener);
+    }
+
+    void notificarEstado(EventEstadoConexion evt) {
+        Object[] listeners = listenerList.getListenerList();
+        for (int i = 0; i < listeners.length; i = i + 2) {
+            if (listeners[i] == InterfaceFrameCliente.class) {
+                ((InterfaceFrameCliente) listeners[i + 1]).onEstado(evt);
             }
-            // Cerramos el socket y los streams
-            socket.close();
-            entrada.close();
-            salida.close();
-        } catch (IOException ex) {
-            Logger.getLogger(Cliente.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-    }
-
-    public void protocoloRegister(BufferedReader entrada, PrintWriter salida, BufferedReader teclado) {
-        try {
-            System.out.println(entrada.readLine());//nombre
-            String nombre = teclado.readLine();
-            salida.println(nombre);
-            System.out.println(entrada.readLine());//password
-            String password = teclado.readLine();
-            salida.println(password);
-
-        } catch (IOException ex) {
-            Logger.getLogger(Cliente.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void protocoloLogin() {
+    @Override
+    public void OnMessageServer(EventMessageServer evento) {
+        //   throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
 
-    }
-
-    public static void main(String[] args) {
-        Cliente cliente = new Cliente();
-        cliente.iniciar("localhost", 5000);
+        System.out.println("mensaje: " + evento.getData());
     }
 }

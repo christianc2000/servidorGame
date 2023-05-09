@@ -10,22 +10,22 @@ package com.mycompany.servidorgame;
  */
 public class User {
 
-    private String nombre;
+    private String nickname;
     private String password;
     public String sesion;
 
-    public User(String nombre, String password, String sesion) {
-        this.nombre = nombre;
+    public User(String nickname, String password, String sesion) {
+        this.nickname = nickname;
         this.password = password;
         this.sesion = sesion;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getNickname() {
+        return nickname;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     public String getPassword() {
@@ -40,7 +40,7 @@ public class User {
         return sesion;
     }
 
-    public void seSesion(String sesion) {
+    public void setSesion(String sesion) {
         this.sesion = sesion;
     }
 
